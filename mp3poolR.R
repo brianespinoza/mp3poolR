@@ -1,7 +1,7 @@
 ## Brian Espinoza
 ## briane@uci.edu
 
-mp3poolR <- function(username, pw, path = "", download = TRUE, first.log = FALSE){
+mp3poolR <- function(username, pw, path = "", download = TRUE){
 
   if(path == "~/Desktop/"){
     stop("choose another folder")
@@ -33,13 +33,28 @@ mp3poolR <- function(username, pw, path = "", download = TRUE, first.log = FALSE
                                 submit = "search")
   if (path == ""){
     download_folder <- paste0("~/Desktop/mp3pool_downloads/", Sys.Date(),"/")
+    log_file <- "~/Desktop/mp3pool_downloads/download_log.txt"
   }else {
-    download_folder <- path
+    path <-
+      paste0(
+        str_c(
+          str_split(
+            str_trim(
+              str_replace_all(path, pattern = "/", replacement = " ")),
+            pattern = " ")[[1]],
+          collapse = "/"),"/")
+
+    download_folder <- paste0(path,Sys.Date(),"/")
+    log_file <- paste0(path,"download_log.txt")
+  }
+  if (!dir.exists(download_folder)){
+    dir.create(path = download_folder)
   }
 
   download_list <- tbl_df(data.frame(music_links = NULL, titles = NULL))
 
   make_links_and_titles <- function(session, df){
+
 
     ml <- read_html(music_session) %>% html_nodes("div .innerPlayer1") %>%
       html_nodes(".innerPlayList1") %>% html_nodes(".play_listing") %>% html_nodes("li") %>%
@@ -63,26 +78,21 @@ mp3poolR <- function(username, pw, path = "", download = TRUE, first.log = FALSE
   download_list <- make_links_and_titles(music_session, download_list)
 
   ## Prepares the download log
-  if (path == "" & first.log == TRUE){
-    log_file <- "~/Desktop/mp3pool_downloads/download_log.txt"
+  if (!file.exists(log_file)){
     write(x = NULL, file = log_file, append = FALSE)
-  } else if(path == "" & first.log == FALSE){
-    log_file <- "~/Desktop/mp3pool_downloads/download_log.txt"
   }
   logged_tracks <- readLines(log_file)
 
 
   download_list <- download_list[(as.integer(which(sapply(X = download_list$titles, FUN = '%in%', logged_tracks) == FALSE))),]
   if (length(download_list$titles) == 0){
-    stop("no new songs to download")
+    stop(message("no new songs to download"))
   }
 
   ## Should the program download?
   if (download == TRUE){
-    if (dir.exists(download_folder) == FALSE){
-      dir.create(path = download_folder) # makes a folder for the date of download
-    }
     for (i in 1:length(download_list$titles)){ # download songs and write to designated file
+      cat(download_list$titles[i],paste0("[",i,"/",length(download_list$titles),"]"), sep = "\n")
       httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())
       write(download_list$titles[i], file = log_file, append = TRUE)
     }
