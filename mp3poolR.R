@@ -1,0 +1,90 @@
+## Brian Espinoza
+## briane@uci.edu
+
+mp3poolR <- function(username, pw, path = "", download = TRUE, first.log = FALSE){
+
+  if(path == "~/Desktop/"){
+    stop("choose another folder")
+  }
+
+  library(httr)
+  library(rvest)
+  library(dplyr)
+  library(stringr)
+  library(curl)
+
+  link <- "http://mp3poolonline.com/user/login"
+  music_session <- html_session(link)
+
+  login_form <- link %>%
+    read_html() %>%
+    html_form()
+  login_form <- login_form[[2]]
+
+  login <- login_form %>%
+    set_values(name = username, pass = pw)
+
+  auth <- submit_form(music_session, form = login) #login submit
+  musicfilter_form <- read_html(auth) %>% html_form()
+  musicfilter_form <- musicfilter_form[[2]] %>% set_values(ratingvalue = "3+")
+
+  music_session <- submit_form(auth,
+                                form = musicfilter_form,
+                                submit = "search")
+  if (path == ""){
+    download_folder <- paste0("~/Desktop/mp3pool_downloads/", Sys.Date(),"/")
+  }else {
+    download_folder <- path
+  }
+
+  download_list <- tbl_df(data.frame(music_links = NULL, titles = NULL))
+
+  make_links_and_titles <- function(session, df){
+
+    ml <- read_html(music_session) %>% html_nodes("div .innerPlayer1") %>%
+      html_nodes(".innerPlayList1") %>% html_nodes(".play_listing") %>% html_nodes("li") %>%
+      html_nodes("audio") %>% html_attr("src")
+
+    music_links <- c(df$music_links, (ml))
+
+    titles <- c(df$titles, (ml %>% str_split("/") %>% sapply(`[`,7) %>%
+      str_split("%20") %>% sapply(paste, collapse = " ")))
+
+    download_list <- tbl_df(data_frame(music_links, titles))
+
+
+  }
+
+  download_list <- make_links_and_titles(music_session, download_list)
+  # go to the next page
+  music_session <- read_html(music_session) %>% html_nodes(".item-2 .active") %>%
+    html_attr("href") %>% paste0("http://mp3poolonline.com",.) %>%
+    jump_to(music_session,.)
+  download_list <- make_links_and_titles(music_session, download_list)
+
+  ## Prepares the download log
+  if (path == "" & first.log == TRUE){
+    log_file <- "~/Desktop/mp3pool_downloads/download_log.txt"
+    write(x = NULL, file = log_file, append = FALSE)
+  } else if(path == "" & first.log == FALSE){
+    log_file <- "~/Desktop/mp3pool_downloads/download_log.txt"
+  }
+  logged_tracks <- readLines(log_file)
+
+
+  download_list <- download_list[(as.integer(which(sapply(X = download_list$titles, FUN = '%in%', logged_tracks) == FALSE))),]
+  if (length(download_list$titles) == 0){
+    stop("no new songs to download")
+  }
+
+  ## Should the program download?
+  if (download == TRUE){
+    if (dir.exists(download_folder) == FALSE){
+      dir.create(path = download_folder) # makes a folder for the date of download
+    }
+    for (i in 1:length(download_list$titles)){ # download songs and write to designated file
+      httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())
+      write(download_list$titles[i], file = log_file, append = TRUE)
+    }
+  }
+}
