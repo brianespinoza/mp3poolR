@@ -92,9 +92,10 @@ mp3poolR <- function(username, pw, path = "", download = TRUE){
   ## Should the program download?
   if (download == TRUE){
     for (i in 1:length(download_list$titles)){ # download songs and write to designated file
-      cat(download_list$titles[i],paste0("[",i,"/",length(download_list$titles),"]"), sep = "\n")
+      cat(download_list$titles[i], paste0("[", i,"/", length(download_list$titles),"]"), sep = "\n")
       httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())
       write(download_list$titles[i], file = log_file, append = TRUE)
+      cat("", "", sep = "\n")
     }
   }
 }
