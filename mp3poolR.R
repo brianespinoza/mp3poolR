@@ -86,7 +86,7 @@ mp3poolR <- function(username, pw, path = "", download = TRUE){
 
   download_list <- download_list[(as.integer(which(sapply(X = download_list$titles, FUN = '%in%', logged_tracks) == FALSE))),]
   if (length(download_list$titles) == 0){
-    stop(message("no new songs to download"))
+    return(message("no new songs to download"))
   }
 
   ## Should the program download?
