@@ -12,9 +12,6 @@ Webscraper allowing you to downloaded top rated songs (4-5 stars) from mp3poolon
 
 - download = boolean, should the script download the songs? *used for bug testing*
 
-- first.log = boolean, should the script create a new log (TRUE) or update an existing one?
-
 - path = character string with a path to your download folder. default is "~/Desktop/mp3pool_downloads"
  
-#### mp3poolR(username, pw, download, first.log, path)
-
+#### mp3poolR(username, pw, download, path)
