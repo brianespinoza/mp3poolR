@@ -1,7 +1,7 @@
 ## Brian Espinoza
 ## briane@uci.edu
 
-mp3poolR <- function(username, pw, path = "", download = TRUE){
+mp3poolR <- function(username, pw, path = "", download = TRUE, ask = TRUE){
 
   if(path == "~/Desktop/"){
     stop("choose another folder")
@@ -89,12 +89,27 @@ mp3poolR <- function(username, pw, path = "", download = TRUE){
     return(message("no new songs to download"))
   }
 
+  readkey <- function()
+    {
+    line <- readline("Download? (y/n) \n")
+    decision <- tolower(line[1])
+  }
   ## Should the program download?
   if (download == TRUE){
     for (i in 1:length(download_list$titles)){ # download songs and write to designated file
       cat(download_list$titles[i], paste0("[", i,"/", length(download_list$titles),"]"), sep = "\n")
-      httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())
-      write(download_list$titles[i], file = log_file, append = TRUE)
+      if (ask == TRUE){
+        decision <- readkey()
+        if (decision == "y"){
+          httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())
+          write(download_list$titles[i], file = log_file, append = TRUE)
+        } else{
+          write(download_list$titles[i], file = log_file, append = TRUE)
+        }
+      } else{
+        httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())
+        write(download_list$titles[i], file = log_file, append = TRUE)
+      }
       cat("", "", sep = "\n")
     }
   }
