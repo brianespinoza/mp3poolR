@@ -96,6 +96,7 @@ mp3poolR <- function(username, pw, path = "", download = TRUE, ask = TRUE){
   }
   ## Should the program download?
   if (download == TRUE){
+    download_list[,2]
     for (i in 1:length(download_list$titles)){ # download songs and write to designated file
       cat(download_list$titles[i], paste0("[", i,"/", length(download_list$titles),"]"), sep = "\n")
       if (ask == TRUE){
