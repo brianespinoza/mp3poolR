@@ -55,11 +55,12 @@ mp3poolR <- function(username, pw, path = "", download = TRUE, ask = TRUE, Quick
 
   make_links_and_titles <- function(session, df){
 
-
+    message("Getting Links...")
     ml <- read_html(music_session) %>% html_nodes("div .innerPlayer1") %>%
       html_nodes(".innerPlayList1") %>% html_nodes(".play_listing") %>% html_nodes("li") %>%
       html_nodes("audio") %>% html_attr("src")
 
+    message("Getting BPM...")
     bpm2 <- read_html(music_session) %>% html_nodes("div .innerPlayer1") %>%
       html_nodes(".innerPlayList1") %>% html_nodes(".play_listing") %>% html_nodes("li") %>%
       html_nodes("div .bpm") %>% html_text()
@@ -78,6 +79,7 @@ mp3poolR <- function(username, pw, path = "", download = TRUE, ask = TRUE, Quick
 
   download_list <- make_links_and_titles(music_session, download_list)
   # go to the next page
+  message("Scraping Page 2...")
   music_session <- read_html(music_session) %>% html_nodes(".item-2 .active") %>%
     html_attr("href") %>% paste0("http://mp3poolonline.com",.) %>%
     jump_to(music_session,.)
