@@ -7,11 +7,11 @@ mp3poolR <- function(username, pw, path = "", download = TRUE, ask = TRUE, Quick
     stop("choose another folder")
   }
 
-  library(httr)
-  library(rvest)
-  library(dplyr)
-  library(stringr)
-  library(curl)
+  suppressWarnings(suppressMessages(library(httr)))
+  suppressWarnings(suppressMessages(library(rvest)))
+  suppressWarnings(suppressMessages(library(dplyr)))
+  suppressWarnings(suppressMessages(library(stringr)))
+  suppressWarnings(suppressMessages(library(curl)))
 
   link <- "http://mp3poolonline.com/user/login"
   music_session <- html_session(link)
@@ -122,7 +122,7 @@ mp3poolR <- function(username, pw, path = "", download = TRUE, ask = TRUE, Quick
           write(download_list$titles[i], file = log_file, append = TRUE)
         }
       } else{
-        httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())
+        suppressWarnings(httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress()))
         write(download_list$titles[i], file = log_file, append = TRUE)
       }
       cat("", "", sep = "\n") # space post-user input
