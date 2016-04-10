@@ -13,5 +13,12 @@ Webscraper allowing you to downloaded top rated songs (4-5 stars) from mp3poolon
 - download = boolean, should the script download the songs? *used for bug testing*
 
 - path = character string with a path to your download folder. default is "~/Desktop/mp3pool_downloads"
+
+- ask = boolean, should the program ask before downloading each song?
+
+- QuickHitter = bolean, should the program download QuickHitter versions of songs from the download queue?
+  - FALSE = does not download QuickHitter versions
+  - TRUE = downloads all versions
+
  
-#### mp3poolR(username, pw, download, path)
+#### mp3poolR(username, pw, download = TRUE, path = "", ask = TRUE, QuickHitter = FALSE)
