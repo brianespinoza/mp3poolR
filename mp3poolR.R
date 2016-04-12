@@ -1,7 +1,7 @@
 ## Brian Espinoza
 ## briane@uci.edu
 
-mp3poolR <- function(username, pw, path = "", download = TRUE, ask = TRUE, QuickHitter = FALSE){
+mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
 
   if(path == "~/Desktop/"){
     stop("choose another folder")
@@ -42,6 +42,7 @@ mp3poolR <- function(username, pw, path = "", download = TRUE, ask = TRUE, Quick
   if (path == ""){
     download_folder <- paste0("~/Desktop/mp3pool_downloads/", Sys.Date(),"/")
     log_file <- "~/Desktop/mp3pool_downloads/download_log.txt"
+    trash_file <- "~/Desktop/mp3pool_downloads/trash_log.txt"
   }else {
     path <-
       paste0(
@@ -54,6 +55,7 @@ mp3poolR <- function(username, pw, path = "", download = TRUE, ask = TRUE, Quick
 
     download_folder <- paste0(path,Sys.Date(),"/")
     log_file <- paste0(path,"download_log.txt")
+    trash_file <- paste0(path, "download_log.txt")
   }
   if (!dir.exists(download_folder)){
     dir.create(path = download_folder)
@@ -100,10 +102,15 @@ mp3poolR <- function(username, pw, path = "", download = TRUE, ask = TRUE, Quick
   if (!file.exists(log_file)){
     write(x = NULL, file = log_file, append = FALSE)
   }
+  if (!file.exists(trash_file)){
+    write(x = NULL, file = trash_file, append = FALSE)
+  }
   logged_tracks <- readLines(log_file)
+  trashed_tracks <- readLines(trash_file)
 
 
   download_list <- download_list[(as.integer(which(sapply(X = download_list$titles, FUN = '%in%', logged_tracks) == FALSE))),]
+  download_list <- download_list[(as.integer(which(sapply(X = download_list$titles, FUN = '%in%', trashed_tracks) == FALSE))),]
 
   if (QuickHitter == FALSE){ ## If false, don't download songs with QuickHitter in the title
     download_list <- download_list[!str_detect(download_list$titles, pattern = "QuickHitter")]
@@ -123,30 +130,27 @@ mp3poolR <- function(username, pw, path = "", download = TRUE, ask = TRUE, Quick
       return(decision)
     } else readkey()
   }
-  ## Should the program download?
-  if (download == TRUE){
-    download_list[,2]
-    for (i in 1:length(download_list$titles)){ # download songs and write to designated file
-      cat(download_list$titles[i], paste0("[", i,"/", length(download_list$titles),"]"), sep = "\n")
-      cat(download_list$bpm[i], "\n")
-      artist <- download_list$titles[i] %>% str_split(pattern = "-") %>% .[[1]][1]
-      cat(logged_tracks[str_detect(logged_tracks, pattern = artist)])
-      if (ask == TRUE){
-        decision <- readkey()
-        if (decision == "y"){
-          httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())
-          write(download_list$titles[i], file = log_file, append = TRUE)
-        } else if (decision == "n"){ # need to separate downloaded and non downloaded tracks
-          write(download_list$titles[i], file = log_file, append = TRUE)
-        } else if (decision == "q"){
-          cat("goodbye")
-          break
-        }
-      } else{ # ask == FALSE
-        suppressWarnings(httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress()))
+  # download_list[,2]
+  for (i in 1:length(download_list$titles)){ # download songs and write to designated file
+    cat(download_list$titles[i], paste0("[", i,"/", length(download_list$titles),"]"), sep = "\n")
+    cat(download_list$bpm[i], "\n")
+    artist <- download_list$titles[i] %>% str_split(pattern = "-") %>% .[[1]][1]
+    cat(logged_tracks[str_detect(logged_tracks, pattern = artist)], "\n")
+    if (ask == TRUE){
+      decision <- readkey()
+      if (decision == "y"){
+        httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())
         write(download_list$titles[i], file = log_file, append = TRUE)
+      } else if (decision == "n"){
+        write(download_list$titles[i], file = trash_file, append = TRUE)
+      } else if (decision == "q"){
+        cat("goodbye")
+        break
       }
-      cat("", "", sep = "\n") # space post-user input
+    } else{ # ask == FALSE
+      suppressWarnings(httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress()))
+      write(download_list$titles[i], file = log_file, append = TRUE)
     }
+    cat("", "", sep = "\n") # space post-user input
   }
 }
