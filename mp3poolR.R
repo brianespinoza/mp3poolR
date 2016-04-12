@@ -134,7 +134,8 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
   for (i in 1:length(download_list$titles)){ # download songs and write to designated file
     cat(download_list$titles[i], paste0("[", i,"/", length(download_list$titles),"]"), sep = "\n")
     cat(download_list$bpm[i], "\n")
-    artist <- download_list$titles[i] %>% str_split(pattern = "-") %>% .[[1]][1]
+    artist <- download_list$titles[i] %>% str_split(pattern = " - ")
+    artist <- artist[[1]][1]
     cat(logged_tracks[str_detect(logged_tracks, pattern = artist)], "\n")
     if (ask == TRUE){
       decision <- readkey()
