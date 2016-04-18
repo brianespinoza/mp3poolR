@@ -8,7 +8,7 @@ mp3poolR allows you to downloaded top rated songs (4-5 stars) from mp3poolonline
 
 ### Notes
 mp3poolR..
-- assumes it's being run from the console.
+- only works in interactive mode
 - creates a download log and a trash log, this keeps track of downloaded songs and songs the user has declined to download. Deleting these files or songs within the files will cause the program to re-download old songs.
 
 ### Arguments:
