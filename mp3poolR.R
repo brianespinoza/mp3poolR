@@ -19,29 +19,16 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
   link <- "http://mp3poolonline.com/user/login"
   music_session <- html_session(link)
 
-  # function to find login form and submit credentials
-  login <- function(){
-    login_form <- link %>%
-      read_html() %>%
-      html_form()
-    login_form <- login_form[[2]]
+  login_form <- link %>%
+    read_html() %>%
+    html_form()
+  login_form <- login_form[[2]]
 
-    login <- login_form %>% set_values(name = username, pass = pw)
-    auth <- submit_form(music_session, form = login)
-  }
+  login <- login_form %>%
+    set_values(name = username, pass = pw)
 
-  # function to be called if credentials are incorrect
-  wrong_login <- function(){
-    message("Incorrect username/password")
-    username <<- readline("username: ")
-    pw <<- readline("password: ")
-    login()
-  }
-
-
-  auth <- login() # first login
-  while (auth$url != "http://mp3poolonline.com/viewnewreleases") auth <- wrong_login()
-
+  # login submit
+  auth <- submit_form(music_session, form = login)
 
   # only search for 4 & 5 star songs
   musicfilter_form <- read_html(auth) %>% html_form()
@@ -126,8 +113,8 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
   download_list <- download_list[(as.integer(which(sapply(X = download_list$titles, FUN = '%in%', trashed_tracks) == FALSE))),]
 
   if (QuickHitter == FALSE){ ## If false, don't download songs with QuickHitter in the title
-    download_list <- download_list[!str_detect(download_list$titles, pattern = "QuickHitter"), ]
-    download_list <- download_list[!str_detect(download_list$titles, pattern = "Quickhitter"), ]
+    download_list <- download_list[!str_detect(download_list$titles, pattern = "QuickHitter")]
+    download_list <- download_list[!str_detect(download_list$titles, pattern = "Quickhitter")]
   }
 
   if (length(download_list$titles) == 0){
@@ -137,9 +124,9 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
   # takes simple user input
   readkey <- function()
     {
-    line <- readline("Download? ([y]es/[n]o) ... [q]uit, [s]kip \n")
+    line <- readline("Download? (y/n) ... q to quit \n")
     decision <- tolower(line[1])
-    if (decision == "y" | decision == "n" | decision == "q" | decision == "s"){
+    if (decision == "y" | decision == "n" | decision == "q"){
       return(decision)
     } else readkey()
   }
@@ -153,18 +140,16 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
     if (ask == TRUE){
       decision <- readkey()
       if (decision == "y"){
-        suppressWarnings(suppressMessages(httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())))
+        httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())
         write(download_list$titles[i], file = log_file, append = TRUE)
       } else if (decision == "n"){
         write(download_list$titles[i], file = trash_file, append = TRUE)
-      }else if (decision == "s"){
-        next
-      }else if (decision == "q"){
+      } else if (decision == "q"){
         cat("goodbye")
         break
       }
     } else{ # ask == FALSE
-      suppressWarnings(suppressMessages(httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())))
+      suppressWarnings(httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress()))
       write(download_list$titles[i], file = log_file, append = TRUE)
     }
     cat("", "", sep = "\n") # space post-user input
