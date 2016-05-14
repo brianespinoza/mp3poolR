@@ -8,11 +8,11 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
   }
 
   # load libraries, suppress loading messages
-  suppressWarnings(suppressMessages(library(httr)))
-  suppressWarnings(suppressMessages(library(rvest)))
-  suppressWarnings(suppressMessages(library(dplyr)))
-  suppressWarnings(suppressMessages(library(stringr)))
-  suppressWarnings(suppressMessages(library(curl)))
+  library(httr, quietly = TRUE)
+  library(rvest, quietly = TRUE)
+  library(dplyr, quietly = TRUE)
+  library(stringr, quietly = TRUE)
+  library(curl, quietly = TRUE)
 
 
   # initiate session and log in
@@ -80,21 +80,23 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
   # scrape links, bpm, and generate titles from links
   make_links_and_titles <- function(session, df){
 
+    li <- read_html(music_session) %>% html_nodes("div .innerPlayer1") %>%
+      html_nodes(".innerPlayList1") %>% html_nodes(".play_listing") %>% html_nodes("li")
+
     message("Getting Links...")
-    ml <- read_html(music_session) %>% html_nodes("div .innerPlayer1") %>%
-      html_nodes(".innerPlayList1") %>% html_nodes(".play_listing") %>% html_nodes("li") %>%
-      html_nodes("audio") %>% html_attr("src")
+    ml <- li %>% html_nodes("audio") %>% html_attr("id") %>% str_split_fixed(pattern = "_", 2) %>%
+      .[,2] %>% str_c("http://mp3poolonline.com/music/download/", .)
+
+    ml2.titles <- li %>% html_nodes("audio") %>% html_attr("src")
 
     message("Getting BPM...")
-    bpm2 <- read_html(music_session) %>% html_nodes("div .innerPlayer1") %>%
-      html_nodes(".innerPlayList1") %>% html_nodes(".play_listing") %>% html_nodes("li") %>%
-      html_nodes("div .bpm") %>% html_text()
+    bpm2 <- li %>% html_nodes("div .bpm") %>% html_text()
 
     music_links <- c(df$music_links, (ml))
     bpm <- c(df$bpm, bpm2)
 
 
-    titles <- c(df$titles, (ml %>% str_split("/") %>% sapply(`[`,7) %>%
+    titles <- c(df$titles, (ml2.titles %>% str_split("/") %>% sapply(`[`,7) %>%
       str_split("%20") %>% sapply(paste, collapse = " ")))
 
     download_list <- tbl_df(data_frame(music_links, titles, bpm))
@@ -137,7 +139,7 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
   # takes simple user input
   readkey <- function()
     {
-    line <- readline("Download? ([y]es/[n]o) ... [q]uit, [s]kip \n")
+    line <- readline("Download? (yes/no) ... quit, skip \n")
     decision <- tolower(line[1])
     if (decision == "y" | decision == "n" | decision == "q" | decision == "s"){
       return(decision)
@@ -145,10 +147,13 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
   }
   # download_list[,2]
   for (i in 1:length(download_list$titles)){ # download songs and write to designated file
-    cat(download_list$titles[i], paste0("[", i,"/", length(download_list$titles),"]"), sep = "\n")
-    cat(download_list$bpm[i], "\n")
     artist <- download_list$titles[i] %>% str_split(pattern = " - ")
+    song <- artist[[1]][2]
     artist <- artist[[1]][1]
+    cat(paste0("[", i,"/", length(download_list$titles),"]"),
+        paste0("Artist: ", artist),
+        paste0("Title: ", song), sep = "\n")
+    cat("BPM: ", download_list$bpm[i], "\n")
     cat(logged_tracks[str_detect(logged_tracks, pattern = artist)], "\n")
     if (ask == TRUE){
       decision <- readkey()
