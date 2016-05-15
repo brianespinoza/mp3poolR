@@ -29,4 +29,4 @@ mp3poolR..
   - TRUE = downloads all versions
 
  
-#### mp3poolR(username, pw, path = "", ask = TRUE, QuickHitter = FALSE)
+#### mp3poolR(username, pw, start = 0, end = 0, path = "", ask = TRUE, QuickHitter = FALSE)
