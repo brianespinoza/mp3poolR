@@ -1,7 +1,15 @@
 ## Brian Espinoza
 ## briane@uci.edu
 
-mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
+mp3poolR <- function(username, pw, start = 0, end = 1, path = "", ask = TRUE, QuickHitter = FALSE){
+
+  ### username    = String. Username
+  ### pw          = String. Password
+  ### start       = Integer. Starting page to scrape
+  ### end         = Integer. Last page to scrape
+  ### path        = String. Path to download folder. Default = "~/Desktop/mp3pool_downloads/"
+  ### ask         = Boolean. If TRUE, will be asked if you want to download the song in queue
+  ### QuickHitter = Boolean. If TRUE, will remove QuickHitter tracks from queue.
 
   if(path == "~/Desktop/"){
     stop("choose another folder")
@@ -40,6 +48,7 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
 
 
   auth <- login() # first login
+  cookie.value <- auth$response$cookies$value
   while (auth$url != "http://mp3poolonline.com/viewnewreleases") auth <- wrong_login()
 
 
@@ -92,7 +101,7 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
     message("Getting BPM...")
     bpm2 <- li %>% html_nodes("div .bpm") %>% html_text()
 
-    music_links <- c(df$music_links, (ml))
+    music_links <- c(df$music_links, ml)
     bpm <- c(df$bpm, bpm2)
 
 
@@ -103,15 +112,22 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
 
 
   }
+  # scraping and pagination
+  if (round(start, 0) == 0){
+    start <- round(start, 0) + 1
+    download_list <- make_links_and_titles(music_session, download_list)
+  }
 
-  download_list <- make_links_and_titles(music_session, download_list)
-
-  # pagination (must find a way to paginate without specifying)
-  message("Scraping Page 2...")
-  music_session <- read_html(music_session) %>% html_nodes(".item-2 .active") %>%
-    html_attr("href") %>% paste0("http://mp3poolonline.com",.) %>%
-    jump_to(music_session,.)
-  download_list <- make_links_and_titles(music_session, download_list)
+  end <- round(end, 0)
+  if (end > 0){
+    for (j in start:end){
+      message(str_c("Scraping Page ", ifelse(start == 0, j+1, j), "..."))
+      music_session <- music_session$url %>% str_replace("viewnewrelease",
+                                        str_c("viewnewrelease?page=", j)) %>%
+        jump_to(music_session, .)
+      download_list <- make_links_and_titles(music_session, download_list)
+    }
+  }
 
   ## Prepares the download log
   if (!file.exists(log_file)){
@@ -137,28 +153,34 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
   }
 
   # takes simple user input
-  readkey <- function()
-    {
+  readkey <- function(){
     line <- readline("Download? (yes/no) ... quit, skip \n")
     decision <- tolower(line[1])
     if (decision == "y" | decision == "n" | decision == "q" | decision == "s"){
       return(decision)
     } else readkey()
   }
+
   # download_list[,2]
   for (i in 1:length(download_list$titles)){ # download songs and write to designated file
-    artist <- download_list$titles[i] %>% str_split(pattern = " - ")
-    song <- artist[[1]][2]
-    artist <- artist[[1]][1]
+    artist <- download_list$titles[i] %>% str_split_fixed(pattern = " - ", 2)
+    song <- artist[,2]
+    artist <- artist[,1]
     cat(paste0("[", i,"/", length(download_list$titles),"]"),
         paste0("Artist: ", artist),
-        paste0("Title: ", song), sep = "\n")
-    cat("BPM: ", download_list$bpm[i], "\n")
-    cat(logged_tracks[str_detect(logged_tracks, pattern = artist)], "\n")
+        paste0("Title: ", song),
+        paste0("BPM: ", download_list$bpm[i], "\n"), sep = "\n")
+    # cat(logged_tracks[str_detect(logged_tracks, pattern = artist)], "\n")
     if (ask == TRUE){
       decision <- readkey()
       if (decision == "y"){
-        suppressWarnings(suppressMessages(httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())))
+        GET(url = download_list$music_links[i],
+            write_disk(paste0(download_folder,
+                              download_list$titles[i]), overwrite = T),
+            progress(),
+            user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"),
+            authenticate(user = username, password = pw),
+            set_cookies(.cookies = c(SESS708898d206bb1ac5c9ea06d86d34bd8c = cookie.value)))
         write(download_list$titles[i], file = log_file, append = TRUE)
       } else if (decision == "n"){
         write(download_list$titles[i], file = trash_file, append = TRUE)
@@ -169,7 +191,13 @@ mp3poolR <- function(username, pw, path = "", ask = TRUE, QuickHitter = FALSE){
         break
       }
     } else{ # ask == FALSE
-      suppressWarnings(suppressMessages(httr::GET(url = download_list$music_links[i], write_disk(paste0(download_folder, download_list$titles[i])), progress())))
+      GET(url = download_list$music_links[i],
+          write_disk(paste0(download_folder,
+                            download_list$titles[i]), overwrite = T),
+          progress(),
+          user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"),
+          authenticate(user = username, password = pw),
+          set_cookies(.cookies = c(SESS708898d206bb1ac5c9ea06d86d34bd8c = cookie.value)))
       write(download_list$titles[i], file = log_file, append = TRUE)
     }
     cat("", "", sep = "\n") # space post-user input
