@@ -16,6 +16,10 @@ mp3poolR..
 
 - pw = string containing your account password
 
+- start = integer of the page number to start scraping. 0 refers to the first page.
+
+- end = integer of the page number to stop scraping. 0 referst to the first page.
+
 - path = character string with a path to your download folder. default is "~/Desktop/mp3pool_downloads"
 
 - ask = boolean, should the program ask before downloading each song?
