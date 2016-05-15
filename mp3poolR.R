@@ -3,6 +3,10 @@
 
 mp3poolR <- function(username, pw, start = 0, end = 1, path = "", ask = TRUE, QuickHitter = FALSE){
 
+  ### Description: mp3poolR is a music webscraper that crawls through mp3poolonline.com, filters songs
+  ###               based on rating. It collects all of the source links and downloads the songs
+  ###               to a user-defined path.
+
   ### username    = String. Username
   ### pw          = String. Password
   ### start       = Integer. Starting page to scrape
@@ -11,16 +15,15 @@ mp3poolR <- function(username, pw, start = 0, end = 1, path = "", ask = TRUE, Qu
   ### ask         = Boolean. If TRUE, will be asked if you want to download the song in queue
   ### QuickHitter = Boolean. If TRUE, will remove QuickHitter tracks from queue.
 
-  if(path == "~/Desktop/"){
-    stop("choose another folder")
-  }
-
-  # load libraries, suppress loading messages
+  ### Dependencies
   library(httr, quietly = TRUE)
   library(rvest, quietly = TRUE)
   library(dplyr, quietly = TRUE)
   library(stringr, quietly = TRUE)
-  library(curl, quietly = TRUE)
+
+  if(path == "~/Desktop/"){
+    stop("choose another folder")
+  }
 
 
   # initiate session and log in
