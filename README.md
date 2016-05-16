@@ -1,5 +1,5 @@
 # mp3poolR
-mp3poolR allows you to downloaded top rated songs (4-5 stars) from mp3poolonline.com. However, you must already have an account. (for now)
+mp3poolR allows you to download top rated songs (4-5 stars) from mp3poolonline.com. However, you must already have an account. (for now)
 
 ### Uses
 - Scrapes mp3poolonline.com for download links then parses those links for file names.
