@@ -117,12 +117,12 @@ mp3poolR <- function(username, pw, start = 1, end = 1, path = "", ask = TRUE, Qu
     ml2.titles <- li %>% html_nodes("audio") %>% html_attr("src")
 
     message("Getting BPM...")
-    bpm2 <- li %>% html_nodes("div .bpm") %>% html_text()
+    bpm2 <- li %>% html_nodes(".bpm") %>% html_text()
 
     music_links <- c(df$music_links, ml)
     bpm <- c(df$bpm, bpm2)
 
-
+    message("Making Titles...")
     titles <- c(df$titles, (ml2.titles %>% str_split("/") %>% sapply(`[`,7) %>%
       str_split("%20") %>% sapply(paste, collapse = " ")))
 
@@ -181,7 +181,7 @@ mp3poolR <- function(username, pw, start = 1, end = 1, path = "", ask = TRUE, Qu
         paste0("Artist: ", artist),
         paste0("Title: ", song),
         paste0("BPM: ", download_list$bpm[i], "\n"), sep = "\n")
-    cat(sapply(logged_tracks[str_detect(logged_tracks, pattern = artist)], FUN = 'str_c', '\n'), '\n')
+    cat(head(sapply(logged_tracks[str_detect(logged_tracks, pattern = artist)], FUN = 'str_c', '\n')), '\n')
     if (ask == TRUE){
       decision <- readkey()
       if (decision == "y"){
