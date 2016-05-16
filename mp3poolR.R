@@ -1,7 +1,7 @@
 ## Brian Espinoza
 ## briane@uci.edu
 
-mp3poolR <- function(username, pw, start = 0, end = 1, path = "", ask = TRUE, QuickHitter = FALSE){
+mp3poolR <- function(username, pw, start = 1, end = 1, path = "", ask = TRUE, QuickHitter = FALSE){
 
   ### Description: mp3poolR is a music webscraper that crawls through mp3poolonline.com, filters songs
   ###               based on rating. It collects all of the source links and downloads the songs
@@ -9,8 +9,8 @@ mp3poolR <- function(username, pw, start = 0, end = 1, path = "", ask = TRUE, Qu
 
   ### username    = String. Username
   ### pw          = String. Password
-  ### start       = Integer. Starting page to scrape
-  ### end         = Integer. Last page to scrape
+  ### start       = Integer greater than 1. Starting page to scrape
+  ### end         = Integer greater than 1. Last page to scrape
   ### path        = String. Path to download folder. Default = "~/Desktop/mp3pool_downloads/"
   ### ask         = Boolean. If TRUE, will be asked if you want to download the song in queue
   ### QuickHitter = Boolean. If TRUE, will remove QuickHitter tracks from queue.
@@ -24,6 +24,21 @@ mp3poolR <- function(username, pw, start = 0, end = 1, path = "", ask = TRUE, Qu
   if(path == "~/Desktop/"){
     stop("choose another folder")
   }
+
+  # error prevention
+  if(start < 1 | end < 1){
+    if (start < 1){
+      start <- readline("Choose another starting page number: ") %>% as.integer() %>%
+        round(0)
+    }
+    if (end < 1){
+      end <- readline("Choose another end page number: ") %>% as.integer() %>%
+        round(0)
+    }
+  }
+  # mp3pool's pagination links are 1 off from the page number
+  start <- start - 1
+  end <- end - 1
 
 
   # initiate session and log in
@@ -115,21 +130,14 @@ mp3poolR <- function(username, pw, start = 0, end = 1, path = "", ask = TRUE, Qu
 
 
   }
-  # scraping and pagination
-  if (round(start, 0) == 0){
-    start <- round(start, 0) + 1
-    download_list <- make_links_and_titles(music_session, download_list)
-  }
 
-  end <- round(end, 0)
-  if (end > 0){
-    for (j in start:end){
-      message(str_c("Scraping Page ", ifelse(start == 0, j+1, j), "..."))
-      music_session <- music_session$url %>% str_replace("viewnewrelease",
-                                        str_c("viewnewrelease?page=", j)) %>%
-        jump_to(music_session, .)
-      download_list <- make_links_and_titles(music_session, download_list)
-    }
+  # scraping and pagination
+  for (j in start:end){
+    message(str_c("Scraping Page ", j+1, "..."))
+    music_session <- music_session$url %>% str_replace("viewnewrelease",
+                                      str_c("viewnewrelease?page=", j)) %>%
+      jump_to(music_session, .)
+    download_list <- make_links_and_titles(music_session, download_list)
   }
 
   ## Prepares the download log
@@ -173,7 +181,7 @@ mp3poolR <- function(username, pw, start = 0, end = 1, path = "", ask = TRUE, Qu
         paste0("Artist: ", artist),
         paste0("Title: ", song),
         paste0("BPM: ", download_list$bpm[i], "\n"), sep = "\n")
-    # cat(logged_tracks[str_detect(logged_tracks, pattern = artist)], "\n")
+    cat(sapply(logged_tracks[str_detect(logged_tracks, pattern = artist)], FUN = 'str_c', '\n'), '\n')
     if (ask == TRUE){
       decision <- readkey()
       if (decision == "y"){
@@ -185,8 +193,10 @@ mp3poolR <- function(username, pw, start = 0, end = 1, path = "", ask = TRUE, Qu
             authenticate(user = username, password = pw),
             set_cookies(.cookies = c(SESS708898d206bb1ac5c9ea06d86d34bd8c = cookie.value)))
         write(download_list$titles[i], file = log_file, append = TRUE)
+        logged_tracks <- readLines(log_file)
       } else if (decision == "n"){
         write(download_list$titles[i], file = trash_file, append = TRUE)
+        trashed_tracks <- readLines(trash_file)
       }else if (decision == "s"){
         next
       }else if (decision == "q"){
