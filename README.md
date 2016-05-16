@@ -16,9 +16,9 @@ mp3poolR..
 
 - pw = string containing your account password
 
-- start = integer of the page number to start scraping. 0 refers to the first page.
+- start = integer of the page number to start scraping. 1 refers to the first page.
 
-- end = integer of the page number to stop scraping. 0 referst to the first page.
+- end = integer of the page number to stop scraping. 1 refers to the first page.
 
 - path = character string with a path to your download folder. default is "~/Desktop/mp3pool_downloads"
 
@@ -29,4 +29,4 @@ mp3poolR..
   - TRUE = downloads all versions
 
  
-#### mp3poolR(username, pw, start = 0, end = 0, path = "", ask = TRUE, QuickHitter = FALSE)
+#### mp3poolR(username, pw, start = 1, end = 1, path = "", ask = TRUE, QuickHitter = FALSE)
