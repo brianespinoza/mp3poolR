@@ -28,5 +28,10 @@ mp3poolR..
   - FALSE = does not download QuickHitter versions
   - TRUE = downloads all versions
 
+### Dependencies:
+- httr
+- rvest
+- dplyr
+- stringr
  
 #### mp3poolR(username, pw, start = 1, end = 1, path = "", ask = TRUE, QuickHitter = FALSE)
